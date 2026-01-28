@@ -2,12 +2,12 @@ FROM registry.redhat.io/ubi9/python-311:9.6
 
 WORKDIR /app
 
+# Install CPU-only PyTorch first (before sentence-transformers pulls GPU version)
+RUN pip install --no-cache-dir torch --index-url https://download.pytorch.org/whl/cpu
+
 # Install dependencies
 COPY requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
-
-# Install MCP dependencies
-RUN pip install --no-cache-dir mcp[cli] fastmcp
 
 COPY smart_search_mcp.py ./
 
