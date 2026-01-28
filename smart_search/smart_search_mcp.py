@@ -116,14 +116,18 @@ def format_result(result: dict) -> dict:
     user = result.get("user_name") or result.get("user", "unknown")
     channel = result.get("channel_id", "")
     
+    # Create a clean text preview (first 300 chars, no newlines)
+    text_preview = text[:300].replace("\n", " ").strip()
+    if len(text) > 300:
+        text_preview += "..."
+    
     return {
-        "text": text,
+        "text": text_preview,
+        "full_text": text if len(text) > 300 else None,  # Only include if truncated
         "user": user,
         "channel_id": channel,
         "timestamp": format_timestamp(ts_raw),
         "url": make_slack_url(channel, ts_raw),
-        "source": result.get("source", ""),
-        "distance": result.get("distance", 0),
     }
 
 
