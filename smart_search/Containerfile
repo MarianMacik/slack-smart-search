@@ -1,0 +1,25 @@
+FROM registry.redhat.io/ubi9/python-311:9.6
+
+WORKDIR /app
+
+# Install dependencies
+COPY requirements.txt ./
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Install MCP dependencies
+RUN pip install --no-cache-dir mcp[cli] fastmcp
+
+COPY smart_search_mcp.py ./
+
+# Database mount point
+VOLUME /data/db
+
+# Environment variables (can be overridden)
+ENV MCP_TRANSPORT=stdio
+ENV DB_PATH=/data/db
+ENV COLLECTION_NAME=slack_messages
+ENV EMBEDDING_MODEL=all-MiniLM-L6-v2
+ENV WORKSPACE_URL=https://redhat-internal.slack.com
+ENV TOP_K=10
+
+CMD ["python", "smart_search_mcp.py"]
