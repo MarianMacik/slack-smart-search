@@ -28,6 +28,7 @@ logging.getLogger("transformers").setLevel(logging.ERROR)
 logging.getLogger("huggingface_hub").setLevel(logging.ERROR)
 
 from mcp.server.fastmcp import FastMCP
+from mcp.server.transport_security import TransportSecuritySettings
 from pymilvus import MilvusClient
 
 # Suppress HF warning during sentence_transformers import
@@ -39,7 +40,7 @@ finally:
     sys.stderr = _old_stderr
 
 # Configuration
-MCP_TRANSPORT = os.environ.get("MCP_TRANSPORT", "stdio")
+MCP_TRANSPORT = os.environ.get("MCP_TRANSPORT", "http")
 DB_PATH = Path(os.environ.get("DB_PATH", "/data/db"))
 PUBLIC_DB = DB_PATH / "slack_public.db"
 PRIVATE_DB = DB_PATH / "slack_private.db"
@@ -48,11 +49,13 @@ EMBEDDING_MODEL = os.environ.get("EMBEDDING_MODEL", "all-MiniLM-L6-v2")
 WORKSPACE_URL = os.environ.get("WORKSPACE_URL", "https://redhat-internal.slack.com")
 TOP_K = int(os.environ.get("TOP_K", "10"))
 
-# Initialize MCP server
-mcp = FastMCP(
-    "smart_search",
-    host="127.0.0.1" if MCP_TRANSPORT == "stdio" else "0.0.0.0"
+# Disable DNS rebinding protection for container networking
+transport_security = TransportSecuritySettings(
+    enable_dns_rebinding_protection=False
 )
+
+# Initialize MCP server with security settings
+mcp = FastMCP("slack-smart-search", transport_security=transport_security)
 
 # Global state for lazy initialization
 _model = None
@@ -240,4 +243,17 @@ async def search_stats() -> dict:
 
 
 if __name__ == "__main__":
-    mcp.run(transport=MCP_TRANSPORT)
+    sys.stderr.write(f"Starting Slack Smart Search MCP Server\n")
+    sys.stderr.write(f"Transport: {MCP_TRANSPORT}\n")
+    sys.stderr.write(f"DB Path: {DB_PATH}\n")
+    sys.stderr.flush()
+
+    if MCP_TRANSPORT == "stdio":
+        mcp.run(transport="stdio")
+    else:
+        # For HTTP transport, get the ASGI app and run with uvicorn
+        import uvicorn
+        app = mcp.streamable_http_app()
+        sys.stderr.write(f"Starting HTTP server on 0.0.0.0:8000\n")
+        sys.stderr.flush()
+        uvicorn.run(app, host="0.0.0.0", port=8000, server_header=False, forwarded_allow_ips="*")
