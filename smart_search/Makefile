@@ -1,6 +1,8 @@
-.PHONY: dump search mcp build rebuild run nuke-dbs
+.PHONY: dump search mcp build rebuild run nuke-dbs clean
 
-IMAGE_NAME ?= smart-search-mcp
+IMAGE_NAME ?= slack-ops
+REGISTRY ?= mirror-registry.osp.rh-ods.com:8443/admin
+TAG ?= latest
 
 dump:
 	source ../tokens.env && python slack_dump.py
@@ -11,11 +13,20 @@ search:
 mcp:
 	DB_PATH=./db python smart_search_mcp.py
 
-build:
-	podman build -t $(IMAGE_NAME) -f Containerfile .
+# Remove existing manifest and any conflicting images before building
+clean:
+	-podman manifest rm $(IMAGE_NAME):$(TAG) 2>/dev/null || true
+	-podman rmi $(REGISTRY)/$(IMAGE_NAME):$(TAG) 2>/dev/null || true
 
-rebuild:
-	podman build --no-cache -t $(IMAGE_NAME) -f Containerfile .
+# Build for amd64 and arm64 platforms only and save into a manifest named '$(IMAGE_NAME):latest'
+build: clean
+	podman build --platform linux/amd64,linux/arm64 --manifest $(IMAGE_NAME):$(TAG) -f Containerfile .
+
+rebuild: clean
+	podman build --platform linux/amd64,linux/arm64 --manifest $(IMAGE_NAME):$(TAG) --no-cache -f Containerfile .
+
+push:
+	podman manifest push $(IMAGE_NAME):$(TAG) docker://$(REGISTRY)/$(IMAGE_NAME):$(TAG) --tls-verify=false
 
 run:
 	podman run -it --rm $(IMAGE_NAME)
