@@ -17,6 +17,10 @@ run-mcp:
 run-mcp-local:
 	podman run -d --name $(IMAGE_NAME) --rm -p 8000:8000 $(IMAGE_NAME):$(TAG)
 
+stop-mcp:
+	podman stop $(IMAGE_NAME)
+	podman rm $(IMAGE_NAME) 2>/dev/null || true
+
 claude-mcp-import:
 	claude mcp add --scope user --transport http slack-smart-search http://127.0.0.1:8000/mcp
 
