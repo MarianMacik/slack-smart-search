@@ -17,8 +17,8 @@ run-mcp:
 run-mcp-local:
 	podman run -d --name $(IMAGE_NAME) --rm -p 8000:8000 $(IMAGE_NAME):$(TAG)
 
-mcp:
-	DB_PATH=./db python smart_search_mcp.py
+claude-mcp-import:
+	claude mcp add --scope user --transport http slack-smart-search http://127.0.0.1:8000/mcp
 
 # Remove existing manifest and any conflicting images before building
 clean:
