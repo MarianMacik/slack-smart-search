@@ -1,4 +1,4 @@
-.PHONY: dump search mcp build rebuild run nuke-dbs clean
+.PHONY: dump search mcp build rebuild run nuke-dbs clean deep-clean
 
 IMAGE_NAME ?= slack-ops
 REGISTRY ?= mirror-registry.osp.rh-ods.com:8443/admin
@@ -9,6 +9,13 @@ dump:
 
 search:
 	python search.py
+
+
+run-mcp: 
+	podman run -d --name $(IMAGE_NAME) --rm --tls-verify=false -p 8000:8000 $(REGISTRY)/$(IMAGE_NAME):$(TAG)
+
+run-mcp-local:
+	podman run -d --name $(IMAGE_NAME) --rm -p 8000:8000 $(IMAGE_NAME):$(TAG)
 
 mcp:
 	DB_PATH=./db python smart_search_mcp.py
@@ -27,9 +34,6 @@ rebuild: clean
 
 push:
 	podman manifest push $(IMAGE_NAME):$(TAG) docker://$(REGISTRY)/$(IMAGE_NAME):$(TAG) --tls-verify=false
-
-run:
-	podman run -it --rm $(IMAGE_NAME)
 
 nuke-dbs:
 	@echo "WARNING: This will delete all database files!"
