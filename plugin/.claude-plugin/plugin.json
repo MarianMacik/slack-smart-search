@@ -1,0 +1,5 @@
+{
+  "name": "smart-search-plugin",
+  "description": "Plugin for searching Slack using various techniques, including semantic search",
+  "version": "0.1.0"
+}

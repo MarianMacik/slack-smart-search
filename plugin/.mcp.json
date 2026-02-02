@@ -1,0 +1,27 @@
+{
+  "mcpServers": {
+    "slack": {
+      "command": "podman",
+      "args": [
+        "run",
+        "-i",
+        "--rm",
+        "-e", "SLACK_XOXC_TOKEN",
+        "-e", "SLACK_XOXD_TOKEN",
+        "-e", "MCP_TRANSPORT",
+        "-e", "LOGS_CHANNEL_ID",
+        "quay.io/redhat-ai-tools/slack-mcp"
+      ],
+      "env": {
+        "SLACK_XOXC_TOKEN": "${SLACK_XOXC_TOKEN}",
+        "SLACK_XOXD_TOKEN": "${SLACK_XOXD_TOKEN}",
+        "MCP_TRANSPORT": "stdio",
+        "LOGS_CHANNEL_ID": ""
+      }
+    },
+    "smart-search": {
+      "type": "http",
+      "url": "${SMART_SEARCH_URL:-http://localhost:8000/mcp}"
+    }
+  }
+}

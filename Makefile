@@ -1,7 +1,7 @@
 .PHONY: dump search mcp build rebuild run nuke-dbs clean deep-clean
 
 IMAGE_NAME ?= slack-ops
-REGISTRY ?= mirror-registry.osp.rh-ods.com:8443/admin
+REGISTRY ?= quay.io/youruser
 TAG ?= latest
 
 dump:
@@ -11,7 +11,7 @@ search:
 	python src/search.py
 
 
-run-mcp: 
+run-mcp:
 	podman run -d --name $(IMAGE_NAME) --rm --tls-verify=false -p 8000:8000 $(REGISTRY)/$(IMAGE_NAME):$(TAG)
 
 run-mcp-local:
